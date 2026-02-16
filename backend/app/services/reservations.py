@@ -54,13 +54,15 @@ async def calculate_total_revenue(property_id: str, tenant_id: str) -> Dict[str,
                         SUM(total_amount) as total_revenue,
                         COUNT(*) as reservation_count
                     FROM reservations 
-                    WHERE property_id = :property_id AND tenant_id = :tenant_id
+                    WHERE property_id = :property_id AND tenant_id = :tenant_id AND  :date_range_start < check_in_date AND check_in_date <= :date_range_end
                     GROUP BY property_id
                 """)
                 
                 result = await session.execute(query, {
                     "property_id": property_id, 
-                    "tenant_id": tenant_id
+                    "tenant_id": tenant_id,
+                    "date_range_start": datetime(2024, 3, 1),
+                    "date_range_end": datetime(2024, 4, 1)
                 })
                 row = result.fetchone()
                 
