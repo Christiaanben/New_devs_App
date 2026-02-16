@@ -2,7 +2,7 @@
 
 ## Background
 
-You've joined our property management team as a junior developer. Our company manages properties for multiple clients across different time zones, and we've recently launched a new revenue dashboard system.
+You have joined our property management team as a junior developer. Our company manages properties for multiple clients across different time zones, and we've recently launched a new revenue dashboard system.
 
 ## The Situation
 
