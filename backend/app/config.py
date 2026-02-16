@@ -126,6 +126,11 @@ class Settings(BaseSettings):
     supabase_max_concurrent_connections: int = 150  # Max concurrent Supabase connections (increased for performance)
     supabase_connection_timeout: float = 30.0  # Request timeout
     supabase_pool_recycle_interval: int = 1800  # 30 minutes
+    supabase_db_user: str = 'postgres'
+    supabase_db_password: str = 'postgres'
+    supabase_db_host: str = 'db'
+    supabase_db_port: int = 5432
+    supabase_db_name: str = 'propertyflow'
     
     # Redis Configuration
     redis_host: str = "localhost"
