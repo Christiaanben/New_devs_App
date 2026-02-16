@@ -38,15 +38,32 @@ async def calculate_total_revenue(property_id: str, tenant_id: str) -> Dict[str,
     try:
         # Import database pool
         from app.core.database_pool import DatabasePool
+        from sqlalchemy import text
+        from zoneinfo import ZoneInfo
         
-        # Initialize pool if needed
         db_pool = DatabasePool()
         await db_pool.initialize()
-                
+        
         if db_pool.session_factory:
             async with await db_pool.get_session() as session:
-                # Use SQLAlchemy text for raw SQL
-                from sqlalchemy import text
+                # Fetch property timezone
+                tz_query = text("""
+                    SELECT timezone FROM properties WHERE id = :property_id AND tenant_id = :tenant_id
+                """)
+                tz_result = await session.execute(tz_query, {
+                    "property_id": property_id,
+                    "tenant_id": tenant_id
+                })
+                tz_row = tz_result.fetchone()
+                property_timezone = tz_row.timezone if tz_row else "UTC"
+                
+                # Calculate local date range for March 2024
+                tz = ZoneInfo(property_timezone)
+                date_range_start = datetime(2024, 3, 1, 0, 0, 0, tzinfo=tz)
+                date_range_end = datetime(2024, 4, 1, 0, 0, 0, tzinfo=tz)
+                # Convert to UTC for DB comparison
+                date_range_start_utc = date_range_start.astimezone(ZoneInfo("UTC"))
+                date_range_end_utc = date_range_end.astimezone(ZoneInfo("UTC"))
                 
                 query = text("""
                     SELECT 
@@ -54,15 +71,14 @@ async def calculate_total_revenue(property_id: str, tenant_id: str) -> Dict[str,
                         SUM(total_amount) as total_revenue,
                         COUNT(*) as reservation_count
                     FROM reservations 
-                    WHERE property_id = :property_id AND tenant_id = :tenant_id AND  :date_range_start < check_in_date AND check_in_date <= :date_range_end
+                    WHERE property_id = :property_id AND tenant_id = :tenant_id AND :date_range_start < check_in_date AND check_in_date <= :date_range_end
                     GROUP BY property_id
                 """)
-                
                 result = await session.execute(query, {
                     "property_id": property_id, 
                     "tenant_id": tenant_id,
-                    "date_range_start": datetime(2024, 3, 1),
-                    "date_range_end": datetime(2024, 4, 1)
+                    "date_range_start": date_range_start_utc,
+                    "date_range_end": date_range_end_utc
                 })
                 row = result.fetchone()
                 
